@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from PyPDF2 import PdfReader
-from docx import Document
+from docx import Document  #import all required lib
 
 #PAGE SETUP 
 st.set_page_config(page_title="Narrative-Nexus", layout="centered")
