@@ -6,15 +6,12 @@ from preprocessing import (
     get_word_count, 
     preprocess_text, 
     extract_text_from_uploaded_file,
-    COLORS # Importing the color definitions for use if needed
+    COLORS
 )
 try:
-    # Attempt to read the external CSS file (standard way)
     with open('styles.css') as f:
         custom_css = f.read()
 except FileNotFoundError:
-    # Fallback CSS for environments without file system access
-    # This block uses the COLORS dictionary defined in preprocessing.py
     custom_css = f"""
     <style>
         /* Fallback CSS */
@@ -41,7 +38,6 @@ st.markdown(custom_css, unsafe_allow_html=True)
 st.markdown('<center><div class="app-title">Mind Mesh Analystics</div></center>', unsafe_allow_html=True)
 st.markdown('<center><div class="app-caption">A Smart Engine for Text Understanding</center></div>', unsafe_allow_html=True)
 
-# Main input selection
 st.subheader("Choose Your Input Method")
 input_method = st.radio(
     "Select Input Source:",
@@ -50,7 +46,7 @@ input_method = st.radio(
     horizontal=True,
     key='input_radio'
 )
-# Initialize session state for processed data
+# processed data
 if 'raw_text' not in st.session_state:
     st.session_state['raw_text'] = ""
 if 'processed_text' not in st.session_state:
@@ -65,13 +61,11 @@ if input_method == 'File Upload':
         key='file_uploader'
     )
     if uploaded_file is not None:
-        # Call the external function from preprocessing.py
         st.session_state['raw_text'] = extract_text_from_uploaded_file(uploaded_file)
         if st.session_state['raw_text']:
             data_available = True
             st.success(f"File '{uploaded_file.name}' loaded. Ready to process.")
-
-else: # Paste Text Directly
+else:
     pasted_text = st.text_area(
         "Paste your text here (minimum 10 characters)",
         height=200,
@@ -80,7 +74,6 @@ else: # Paste Text Directly
     if pasted_text and len(pasted_text) > 10:
         st.session_state['raw_text'] = pasted_text
         data_available = True
-        # Call the external function from preprocessing.py
         st.info(f"Text available for processing ({get_word_count(pasted_text)} words).")
     elif pasted_text and len(pasted_text) <= 10:
         st.warning("Please paste more substantial text.")
@@ -89,7 +82,6 @@ st.markdown("---")
 
 if st.button("Process Data", disabled=not data_available):
     if st.session_state['raw_text']:
-        # Call the external function from preprocessing.py
         st.session_state['processed_text'] = preprocess_text(st.session_state['raw_text'])
         st.success("Data successfully processed!")
     else:
@@ -101,7 +93,6 @@ if st.session_state['raw_text'] or st.session_state['processed_text']:
     raw_word_count = get_word_count(st.session_state['raw_text'])
     processed_word_count = get_word_count(st.session_state['processed_text'])
     
-    # Use columns to display metrics side-by-side
     col1, col2 = st.columns(2)
     with col1:
         st.metric(
@@ -110,19 +101,15 @@ if st.session_state['raw_text'] or st.session_state['processed_text']:
             delta=None
         )
     with col2:
-        # The delta now correctly shows a decrease if preprocessing removes words
         st.metric(
             label="Processed Word Count", 
             value=f"{processed_word_count:,}",
             delta=processed_word_count - raw_word_count if processed_word_count - raw_word_count != 0 else None,
-            delta_color="inverse" # Use inverse color to denote a decrease as expected/neutral for cleanup
+            delta_color="inverse"
         )
     st.markdown("---")
-
     st.subheader("Raw and Processed Text Comparison")
-    # Use columns to display text comparison side-by-side
     col_raw, col_processed = st.columns(2)
-
     with col_raw:
         st.markdown(f"#### Original Text ({raw_word_count} words)")
         st.code(st.session_state['raw_text'][:500] + ('...' if len(st.session_state['raw_text']) > 500 else ''), language='markdown')
