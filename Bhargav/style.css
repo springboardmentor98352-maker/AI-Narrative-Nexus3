@@ -1,4 +1,3 @@
-/* Define the custom colors for easy reference */
 :root {
     --color-primary: #51E2F5;
     --color-secondary: #FFA8B6;
@@ -7,14 +6,12 @@
     --color-text: #A28089;
 }
 
-/* Global Styling */
 .stApp {
     background-color: var(--color-background);
     color: var(--color-text);
     font-family: 'Inter', sans-serif;
 }
 
-/* Title and Caption */
 .app-title {
     color: var(--color-text);
     font-size: 2.5rem;
@@ -23,6 +20,7 @@
     margin-bottom: 0.5rem;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
+
 .app-caption {
     color: var(--color-text);
     font-size: 1.2rem;
@@ -30,7 +28,6 @@
     margin-bottom: 2rem;
 }
 
-/* Card/Section Styling - Targets containers and inputs */
 div[data-testid="stFileUploader"],
 div[data-testid="stTextarea"],
 div[data-testid="stRadio"] > div,
@@ -43,7 +40,6 @@ div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stButton"]) {
     border: 1px solid var(--color-card-bg);
 }
 
-/* Process Button Styling */
 .stButton > button {
     background-color: var(--color-primary) !important;
     color: white !important;
@@ -54,29 +50,30 @@ div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stButton"]) {
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 .stButton > button:hover {
     background-color: #40c4e0 !important; /* Slightly darker primary */
     transform: translateY(-1px);
 }
 
-/* Radio Button Container Styling */
 div[data-testid="stRadio"] > div {
     background-color: var(--color-card-bg);
     padding: 1rem;
 }
 
-/* Metric/Word Count Display */
 div[data-testid="stMetric"] {
     background-color: var(--color-card-bg) !important;
     padding: 10px 20px;
     border-radius: 8px;
     border: 2px solid var(--color-primary);
 }
+
 div[data-testid="stMetric"] > div > div:first-child {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--color-text);
 }
+
 div[data-testid="stMetric"] label {
     color: var(--color-text);
 }
