@@ -110,11 +110,24 @@ if st.session_state['raw_text'] or st.session_state['processed_text']:
     st.markdown("---")
     st.subheader("Raw and Processed Text Comparison")
     col_raw, col_processed = st.columns(2)
-    with col_raw:
-        st.markdown(f"#### Original Text ({raw_word_count} words)")
-        st.code(st.session_state['raw_text'][:500] + ('...' if len(st.session_state['raw_text']) > 500 else ''), language='markdown')
-        st.caption("Showing first 500 characters of the raw text.")
-    with col_processed:
-        st.markdown(f"#### Preprocessed Text ({processed_word_count} words)")
-        st.code(st.session_state['processed_text'][:500] + ('...' if len(st.session_state['processed_text']) > 500 else ''), language='markdown')
-        st.caption("Showing first 500 characters of the processed text.")
+with col_raw:
+    st.markdown(f"#### Original Text ({raw_word_count} words)")
+    st.text_area(
+        "Raw Text Preview",
+        st.session_state['raw_text'][:500] + ('...' if len(st.session_state['raw_text']) > 500 else ''), 
+        height=300,
+        label_visibility="collapsed",
+        key='raw_text_area'
+    )
+    st.caption("Showing first 500 characters of the raw text.")
+
+with col_processed:
+    st.markdown(f"#### Preprocessed Text ({processed_word_count} words)")
+    st.text_area(
+        "Processed Text Preview",
+        st.session_state['processed_text'][:500] + ('...' if len(st.session_state['processed_text']) > 500 else ''),
+        height=300,
+        label_visibility="collapsed",
+        key='processed_text_area'
+    )
+    st.caption("Showing first 500 characters of the processed text.")
