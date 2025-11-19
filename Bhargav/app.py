@@ -6,30 +6,25 @@ from preprocessing import (
     get_top_keywords
 )
 
-# Page Config
 st.set_page_config(page_title="Mind Mesh Analytics", layout="wide")
 
-# Load External CSS
 try:
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except FileNotFoundError:
     st.warning("Style file not found. Please upload 'style.css'.")
 
-# App Header
 st.markdown('<div class="app-title">Mind Mesh Analytics</div>', unsafe_allow_html=True)
 st.markdown('<div class="app-caption">A Smart Engine for Text Understanding</div>', unsafe_allow_html=True)
 
-# Initialize Session State
 if 'raw_text' not in st.session_state:
     st.session_state['raw_text'] = ""
 if 'processed_text' not in st.session_state:
     st.session_state['processed_text'] = ""
-# Store the last uploaded file ID to prevent redundant reloading
+
 if 'last_uploaded_file_id' not in st.session_state:
     st.session_state['last_uploaded_file_id'] = None
 
-# --- INPUT SECTION ---
 st.subheader("📁 Data Import")
 input_method = st.radio(
     "Select Input Method:",
@@ -45,7 +40,6 @@ if input_method == 'File':
     )
     
     if uploaded_file is not None:
-        # Check if this is a new file or the same one
         file_id = f"{uploaded_file.name}_{uploaded_file.size}"
         
         if file_id != st.session_state['last_uploaded_file_id']:
@@ -53,13 +47,11 @@ if input_method == 'File':
             if extracted_text:
                 st.session_state['raw_text'] = extracted_text
                 st.session_state['last_uploaded_file_id'] = file_id
-                # Clear previous processing results when new file loads
                 st.session_state['processed_text'] = "" 
                 st.toast(f"Successfully Loaded: {uploaded_file.name}", icon="✅")
         elif st.session_state['raw_text']:
              st.success(f"✅ File Ready: {uploaded_file.name}")
     else:
-        # Reset if file is removed
         if st.session_state['last_uploaded_file_id'] is not None:
             st.session_state['raw_text'] = ""
             st.session_state['processed_text'] = ""
@@ -74,9 +66,7 @@ else:
     if text_input:
         st.session_state['raw_text'] = text_input
 
-# --- ACTION BUTTON (Below Inputs) ---
 st.markdown("<br>", unsafe_allow_html=True)
-# Using a centered column layout for the button to make it look neat
 col_btn, _ = st.columns([1, 3])
 with col_btn:
     if st.button("⚡ Start Pre-processing", use_container_width=True):
@@ -88,7 +78,6 @@ with col_btn:
 
 st.markdown("---")
 
-# --- RESULTS DASHBOARD ---
 if st.session_state['processed_text']:
     st.subheader("📊 Analysis Dashboard")
     
@@ -115,7 +104,6 @@ if st.session_state['processed_text']:
             height=450,
             key="processed_output_display"
         )
-        # Download Button (Below Processed Text)
         st.markdown("<br>", unsafe_allow_html=True)
         st.download_button(
             label="📥 Download Processed Data",
@@ -124,7 +112,6 @@ if st.session_state['processed_text']:
             mime="text/plain",
             use_container_width=True
         )
-    
     with res_col2:
         st.markdown("#### 🔑 Top Keywords")
         df_keywords = get_top_keywords(st.session_state['processed_text'], n=10)
@@ -143,6 +130,5 @@ if st.session_state['processed_text']:
                 )
             }
         )
-
 elif st.session_state['raw_text']:
     st.info("Ready to process. Click 'Start Pre-processing' above to begin.")
