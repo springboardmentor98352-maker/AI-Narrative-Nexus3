@@ -1,133 +1,148 @@
 import streamlit as st
-import os
-
-st.set_page_config(layout="wide") 
 from preprocessing import (
     get_word_count, 
     preprocess_text, 
     extract_text_from_uploaded_file,
-    COLORS
+    get_top_keywords
 )
+
+# Page Config
+st.set_page_config(page_title="Mind Mesh Analytics", layout="wide")
+
+# Load External CSS
 try:
-    with open('styles.css') as f:
-        custom_css = f.read()
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except FileNotFoundError:
-    custom_css = f"""
-    <style>
-        /* Fallback CSS */
-        .stApp {{ background-color: {COLORS['background']}; color: {COLORS['text']}; font-family: 'Inter', sans-serif; }}
-        .app-title {{ color: {COLORS['text']}; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem; }}
-        .app-caption {{ color: {COLORS['text']}; font-size: 1.2rem; text-align: center; margin-bottom: 2rem; }}
-        .stButton > button {{ 
-            background-color: {COLORS['primary']} !important; 
-            color: white !important; 
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }}
-        [data-testid="stMetric"] {{
-            background-color: {COLORS['card_bg']} !important;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 2px solid {COLORS['primary']};
-        }}
-    </style>
-    """
+    st.warning("Style file not found. Please upload 'style.css'.")
 
-st.markdown(custom_css, unsafe_allow_html=True)
+# App Header
+st.markdown('<div class="app-title">Mind Mesh Analytics</div>', unsafe_allow_html=True)
+st.markdown('<div class="app-caption">A Smart Engine for Text Understanding</div>', unsafe_allow_html=True)
 
-st.markdown('<center><div class="app-title">Mind Mesh Analystics</div></center>', unsafe_allow_html=True)
-st.markdown('<center><div class="app-caption">A Smart Engine for Text Understanding</center></div>', unsafe_allow_html=True)
-
-st.subheader("Choose Your Input Method")
-input_method = st.radio(
-    "Select Input Source:",
-    ('File Upload', 'Paste Text'),
-    index=0,
-    horizontal=True,
-    key='input_radio'
-)
-# processed data
+# Initialize Session State
 if 'raw_text' not in st.session_state:
     st.session_state['raw_text'] = ""
 if 'processed_text' not in st.session_state:
     st.session_state['processed_text'] = ""
-data_available = False
+# Store the last uploaded file ID to prevent redundant reloading
+if 'last_uploaded_file_id' not in st.session_state:
+    st.session_state['last_uploaded_file_id'] = None
 
-if input_method == 'File Upload':
+# --- INPUT SECTION ---
+st.subheader("📁 Data Import")
+input_method = st.radio(
+    "Select Input Method:",
+    ('File', 'Paste Text'),
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+if input_method == 'File':
     uploaded_file = st.file_uploader(
-        "Upload a TXT, CSV, PDF, or DOCX file",
-        type=['txt', 'csv', 'pdf', 'docx'],
-        accept_multiple_files=False,
-        key='file_uploader'
+        "Upload Document (Supported: .txt, .csv, .pdf, .docx)",
+        type=['txt', 'csv', 'pdf', 'docx']
     )
+    
     if uploaded_file is not None:
-        st.session_state['raw_text'] = extract_text_from_uploaded_file(uploaded_file)
-        if st.session_state['raw_text']:
-            data_available = True
-            st.success(f"File '{uploaded_file.name}' loaded. Ready to process.")
+        # Check if this is a new file or the same one
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+        
+        if file_id != st.session_state['last_uploaded_file_id']:
+            extracted_text = extract_text_from_uploaded_file(uploaded_file)
+            if extracted_text:
+                st.session_state['raw_text'] = extracted_text
+                st.session_state['last_uploaded_file_id'] = file_id
+                # Clear previous processing results when new file loads
+                st.session_state['processed_text'] = "" 
+                st.toast(f"Successfully Loaded: {uploaded_file.name}", icon="✅")
+        elif st.session_state['raw_text']:
+             st.success(f"✅ File Ready: {uploaded_file.name}")
+    else:
+        # Reset if file is removed
+        if st.session_state['last_uploaded_file_id'] is not None:
+            st.session_state['raw_text'] = ""
+            st.session_state['processed_text'] = ""
+            st.session_state['last_uploaded_file_id'] = None
+
 else:
-    pasted_text = st.text_area(
-        "Paste your text here (minimum 10 characters)",
-        height=200,
-        key='text_area'
+    text_input = st.text_area(
+        "Paste Text Here",
+        height=250,
+        placeholder="Type or paste your content here..."
     )
-    if pasted_text and len(pasted_text) > 10:
-        st.session_state['raw_text'] = pasted_text
-        data_available = True
-        st.info(f"Text available for processing ({get_word_count(pasted_text)} words).")
-    elif pasted_text and len(pasted_text) <= 10:
-        st.warning("Please paste more substantial text.")
-        st.session_state['raw_text'] = ""
+    if text_input:
+        st.session_state['raw_text'] = text_input
+
+# --- ACTION BUTTON (Below Inputs) ---
+st.markdown("<br>", unsafe_allow_html=True)
+# Using a centered column layout for the button to make it look neat
+col_btn, _ = st.columns([1, 3])
+with col_btn:
+    if st.button("⚡ Start Pre-processing", use_container_width=True):
+        if st.session_state['raw_text']:
+            st.session_state['processed_text'] = preprocess_text(st.session_state['raw_text'])
+            st.toast("Processing completed successfully!", icon="🎉")
+        else:
+            st.error("Please provide input text first.")
+
 st.markdown("---")
 
-if st.button("Process Data", disabled=not data_available):
-    if st.session_state['raw_text']:
-        st.session_state['processed_text'] = preprocess_text(st.session_state['raw_text'])
-        st.success("Data successfully processed!")
-    else:
-        st.warning("Please upload a file or paste text before processing.")
-
-if st.session_state['raw_text'] or st.session_state['processed_text']:
-    st.subheader("Analysis Results")
-    # Calculate word counts using external function
-    raw_word_count = get_word_count(st.session_state['raw_text'])
-    processed_word_count = get_word_count(st.session_state['processed_text'])
+# --- RESULTS DASHBOARD ---
+if st.session_state['processed_text']:
+    st.subheader("📊 Analysis Dashboard")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(
-            label="Original Word Count", 
-            value=f"{raw_word_count:,}",
-            delta=None
-        )
-    with col2:
-        st.metric(
-            label="Processed Word Count", 
-            value=f"{processed_word_count:,}",
-            delta=processed_word_count - raw_word_count if processed_word_count - raw_word_count != 0 else None,
-            delta_color="inverse"
-        )
-    st.markdown("---")
-    st.subheader("Raw and Processed Text Comparison")
-    col_raw, col_processed = st.columns(2)
-with col_raw:
-    st.markdown(f"#### Original Text ({raw_word_count} words)")
-    st.text_area(
-        "Raw Text Preview",
-        st.session_state['raw_text'][:500] + ('...' if len(st.session_state['raw_text']) > 500 else ''), 
-        height=300,
-        label_visibility="collapsed",
-        key='raw_text_area'
-    )
-    st.caption("Showing first 500 characters of the raw text.")
+    # Metrics Row
+    raw_count = get_word_count(st.session_state['raw_text'])
+    proc_count = get_word_count(st.session_state['processed_text'])
+    
+    m_col1, m_col2 = st.columns(2)
+    with m_col1:
+        st.metric(label="Original Words", value=raw_count)
+    with m_col2:
+        st.metric(label="Processed Words", value=proc_count, delta=proc_count-raw_count)
 
-with col_processed:
-    st.markdown(f"#### Preprocessed Text ({processed_word_count} words)")
-    st.text_area(
-        "Processed Text Preview",
-        st.session_state['processed_text'][:500] + ('...' if len(st.session_state['processed_text']) > 500 else ''),
-        height=300,
-        label_visibility="collapsed",
-        key='processed_text_area'
-    )
-    st.caption("Showing first 500 characters of the processed text.")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Content & Stats Row
+    res_col1, res_col2 = st.columns([3, 2], gap="medium")
+    
+    with res_col1:
+        st.markdown("#### 📝 Processed Text View")
+        st.text_area(
+            label="Output Data",
+            value=st.session_state['processed_text'],
+            height=450,
+            key="processed_output_display"
+        )
+        # Download Button (Below Processed Text)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.download_button(
+            label="📥 Download Processed Data",
+            data=st.session_state['processed_text'],
+            file_name="processed_data.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+    
+    with res_col2:
+        st.markdown("#### 🔑 Top Keywords")
+        df_keywords = get_top_keywords(st.session_state['processed_text'], n=10)
+        
+        st.dataframe(
+            df_keywords,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Keyword": st.column_config.TextColumn("Keyword", width="medium"),
+                "Frequency": st.column_config.ProgressColumn(
+                    "Frequency",
+                    format="%d",
+                    min_value=0,
+                    max_value=int(df_keywords['Frequency'].max()) if not df_keywords.empty else 10
+                )
+            }
+        )
+
+elif st.session_state['raw_text']:
+    st.info("Ready to process. Click 'Start Pre-processing' above to begin.")
