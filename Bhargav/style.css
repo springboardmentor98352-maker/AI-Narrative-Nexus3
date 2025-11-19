@@ -1,79 +1,122 @@
 :root {
-    --color-primary: #51E2F5;
-    --color-secondary: #FFA8B6;
-    --color-background: #EDF7F6;
-    --color-card-bg: #9DF9EF;
-    --color-text: #A28089;
+    --bg-color: #2C2B30; 
+    --card-color: #4F4F51;
+    --text-color: #D6D6D6;
+    --accent-pink: #F2C4CE;
+    --accent-coral: #F58F7C;
 }
 
 .stApp {
-    background-color: var(--color-background);
-    color: var(--color-text);
-    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Helvetica Neue', sans-serif;
 }
 
 .app-title {
-    color: var(--color-text);
-    font-size: 2.5rem;
-    font-weight: 700;
+    color: var(--accent-coral);
+    font-size: 3.5rem;
+    font-weight: 800;
     text-align: center;
-    margin-bottom: 0.5rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+    text-shadow: 0px 4px 10px rgba(0,0,0,0.3);
 }
 
 .app-caption {
-    color: var(--color-text);
+    color: var(--accent-pink);
     font-size: 1.2rem;
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
+    font-weight: 400;
+    letter-spacing: 1.5px;
 }
 
 div[data-testid="stFileUploader"],
 div[data-testid="stTextarea"],
-div[data-testid="stRadio"] > div,
-div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stButton"]) {
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    background-color: white !important; /* Ensures input fields are white */
-    border: 1px solid var(--color-card-bg);
-}
-
-.stButton > button {
-    background-color: var(--color-primary) !important;
-    color: white !important;
-    border: none;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    transition: background-color 0.3s, transform 0.1s;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.stButton > button:hover {
-    background-color: #40c4e0 !important; /* Slightly darker primary */
-    transform: translateY(-1px);
-}
-
 div[data-testid="stRadio"] > div {
-    background-color: var(--color-card-bg);
-    padding: 1rem;
+    background-color:white !important;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 1.5rem;
+    color: black !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
 
 div[data-testid="stMetric"] {
-    background-color: var(--color-card-bg) !important;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: 2px solid var(--color-primary);
+    background-color: var(--card-color) !important;
+    border-radius: 12px;
+    border-left: 6px solid var(--accent-coral);
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
 }
 
-div[data-testid="stMetric"] > div > div:first-child {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--color-text);
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-5px);
 }
 
 div[data-testid="stMetric"] label {
-    color: var(--color-text);
+    color: var(--accent-pink) !important;
+    font-size: 1rem !important;
+}
+
+div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+    color: white !important;
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+}
+
+.stButton > button {
+    background: linear-gradient(45deg, var(--accent-coral), var(--accent-pink)) !important;
+    color: #2C2B30 !important;
+    font-weight: bold;
+    border-radius: 30px;
+    border: none;
+    padding: 0.8rem 2.5rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy effect */
+    box-shadow: 0 5px 15px rgba(245, 143, 124, 0.3);
+}
+
+.stButton > button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(245, 143, 124, 0.5);
+    filter: brightness(1.1);
+}
+
+.stButton > button:active {
+    transform: scale(0.95);
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color); 
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--card-color); 
+    border-radius: 6px;
+    border: 3px solid var(--bg-color); 
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-coral); 
+}
+
+div[data-testid="stDataFrame"] {
+    background-color: var(--card-color);
+    border-radius: 12px;
+    padding: 10px;
+}
+
+textarea {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    caret-color: black !important;
+    font-weight: 500;
+}
+
+h1, h2, h3, h4 {
+    color: var(--text-color) !important;
 }
