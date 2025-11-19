@@ -41,7 +41,7 @@ st.markdown('<center><div class="app-caption">A Smart Engine for Text Understand
 st.subheader("Choose Your Input Method")
 input_method = st.radio(
     "Select Input Source:",
-    ('File Upload', 'Paste Text Directly'),
+    ('File Upload', 'Paste Text'),
     index=0,
     horizontal=True,
     key='input_radio'
