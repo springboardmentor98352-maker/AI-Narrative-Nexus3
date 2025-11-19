@@ -18,7 +18,6 @@ def get_word_count(text: str) -> int:
     """
     if not text:
         return 0
-    # Splits by any whitespace character
     return len(text.split())
 
 def preprocess_text(text: str) -> str:
@@ -42,16 +41,12 @@ def extract_text_from_uploaded_file(uploaded_file: st.runtime.uploaded_file_mana
     """
     file_extension = uploaded_file.name.split('.')[-1].lower()
     text = ""
-
     try:
         if file_extension == 'txt':
             text = uploaded_file.getvalue().decode("utf-8")
         
-        elif file_extension == 'csv':
-            # FIX: Convert all cells to string and join values to avoid counting separators/newlines 
+        elif file_extension == 'csv': 
             df = pd.read_csv(uploaded_file)
-            
-            # Combine all non-NaN values from all cells into a single, space-separated string.
             text = ' '.join(df.astype(str).values.flatten())
 
         elif file_extension == 'pdf':
@@ -69,7 +64,6 @@ def extract_text_from_uploaded_file(uploaded_file: st.runtime.uploaded_file_mana
             else:
                 st.warning("Install 'python-docx' for DOCX support. Using mock content.")
                 text = f"Mock DOCX Content: File '{uploaded_file.name}' placeholder text for analysis."
-        
         else:
             st.error(f"Unsupported file type: {file_extension}")
             return None
