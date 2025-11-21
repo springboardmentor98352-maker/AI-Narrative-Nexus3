@@ -1,41 +1,53 @@
-import re  #py regular expression lib used to clean txt
-import nltk #natural lang toolkit used for NLP tasks
-from nltk.corpus import stopwords #list outthe common wprds
-from nltk.stem import WordNetLemmatizer # convert words to their baseform
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from cleaning import clean_text
 
-#Download resources 
-nltk.download("punkt")   #tokenization
-nltk.download("stopwords")  #stopword list
-nltk.download("wordnet")  #lemmatization
+#Downloads
+nltk.download("punkt")
+nltk.download("wordnet")
+nltk.download("stopwords")
 
 stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
 
 def preprocess_text(text):
-    #BEFORE CLEANING 
-    before_text = text
-    before_char_count = len(before_text)
 
-    #PHASE 1 — Cleaning
-    text = text.lower()                                     # Lowercase
-    text = re.sub(r"[^a-z\s]", "", text)                    # Remove punctuation & special chars
-    
-    tokens = nltk.word_tokenize(text)                       # Tokenize
-    tokens = [t for t in tokens if t not in stop_words]     # Remove stopwords
+    #Original stats
+    original_words = len(text.split())
+    original_chars = len(text)
 
-    # PHASE 2 — Normalization
-    tokens = [lemmatizer.lemmatize(t) for t in tokens]      # Lemmatization(conv words to root form )
+    #Cleaning
+    cleaned = clean_text(text)
 
-    # PHASE 3 — Final tokenization & output
-    after_text = " ".join(tokens)
-    after_char_count = len(after_text)
+    #Tokenization
+    tokens = nltk.word_tokenize(cleaned)
 
-    # Return everything for analysis
+    #Stopwords removal
+    tokens = [t for t in tokens if t not in stop_words]
+
+    #Lemmatization
+    tokens = [lemmatizer.lemmatize(t) for t in tokens]
+
+    #Final processed text
+    processed_text = " ".join(tokens)
+
+    #Cleaned stats
+    cleaned_words = len(tokens)
+    cleaned_chars = len(processed_text)
+
+    #Reduction %
+    word_reduction = round(((original_words - cleaned_words)/original_words)*100,2) if original_words else 0
+    char_reduction = round(((original_chars - cleaned_chars)/original_chars)*100,2) if original_chars else 0
+
     return {
-        "before_text": before_text,
-        "before_char_count": before_char_count,
-        "after_text": after_text,
-        "after_char_count": after_char_count,
+        "original_text": text,
+        "processed_text": processed_text,
+        "original_words": original_words,
+        "original_chars": original_chars,
+        "cleaned_words": cleaned_words,
+        "cleaned_chars": cleaned_chars,
+        "word_reduction": word_reduction,
+        "char_reduction": char_reduction,
         "tokens": tokens
     }
-
