@@ -6,7 +6,7 @@ from preprocessing import (
     get_top_keywords
 )
 
-st.set_page_config(page_title="Mind Mesh Analytics", layout="wide")
+st.set_page_config(page_title="Mind Mesh Analyst", layout="wide")
 
 try:
     with open('style.css') as f:
@@ -14,7 +14,7 @@ try:
 except FileNotFoundError:
     st.warning("Style file not found. Please upload 'style.css'.")
 
-st.markdown('<div class="app-title">Mind Mesh Analytics</div>', unsafe_allow_html=True)
+st.markdown('<div class="app-title">Mind Mesh Analyst</div>', unsafe_allow_html=True)
 st.markdown('<div class="app-caption">A Smart Engine for Text Understanding</div>', unsafe_allow_html=True)
 
 if 'raw_text' not in st.session_state:
