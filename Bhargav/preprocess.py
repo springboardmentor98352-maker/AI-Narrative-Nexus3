@@ -1,4 +1,3 @@
-# preprocessing.py (replace your existing file)
 import pandas as pd
 import re
 from collections import Counter
@@ -55,7 +54,7 @@ def preprocess_text(text: str) -> str:
         return ""
     text = text.lower()
     text = re.sub(r"'", "", text)
-    text = re.sub(r'[^a-z\s]', ' ', text)   # keep only letters and spaces
+    text = re.sub(r'[^a-z\s]', ' ', text)
     tokens = text.split()
     cleaned = [t for t in tokens if t not in STOPWORDS and len(t) > 1]
     return ' '.join(cleaned)
@@ -107,7 +106,6 @@ def extract_text_from_uploaded_file(uploaded_file) -> str:
 
         elif file_extension == 'csv':
             df = pd.read_csv(uploaded_file, dtype=str, keep_default_na=False)
-            # join cells with spaces
             text = ' '.join(df.fillna('').astype(str).values.flatten())
 
         elif file_extension == 'pdf':
@@ -122,7 +120,6 @@ def extract_text_from_uploaded_file(uploaded_file) -> str:
                     pages_text.append(page_text)
                 text = "\n".join(pages_text).strip()
                 if not text:
-                    # sometimes extract_text returns empty because of encoding; return empty and let UI show it
                     st.warning("PDF was read but no extractable text was found on pages. This can happen with scanned PDFs or unusual encodings.")
                     return ""
             except Exception as e:
