@@ -1,4 +1,3 @@
-# app.py (replace your existing file)
 import streamlit as st
 import pandas as pd
 from preprocess import (
@@ -11,7 +10,6 @@ from preprocess import (
 
 st.set_page_config(page_title="Mind Mesh Analyst", layout="wide", initial_sidebar_state="expanded")
 
-# Load CSS
 try:
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
@@ -62,7 +60,6 @@ else:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Show raw preview and counts so user can confirm extraction
 if st.session_state['raw_text']:
     st.markdown("### Raw Text Preview (first 800 chars)")
     st.code(st.session_state['raw_text'][:800], language='text')
@@ -77,7 +74,6 @@ with col_btn:
             st.error("Please provide input text first (upload a file or paste text).")
         else:
             processed = preprocess_text(raw)
-            # If aggressive cleaning produced an empty string, use fallback
             if not processed.strip():
                 st.warning("Standard preprocessing removed all tokens (this can happen with some PDFs). Using a fallback, less-aggressive preprocessing so you can inspect results.")
                 processed = preprocess_text_with_fallback(raw)
@@ -126,4 +122,5 @@ if st.session_state['processed_text']:
 elif st.session_state['raw_text']:
     st.info("Ready to process. Click '⚡ Start Pre-processing' above to begin.")
 else:
+
     st.info("Upload a file or paste text to get started.")
