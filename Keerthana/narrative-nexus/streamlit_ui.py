@@ -59,9 +59,9 @@ def render_ui():
         st.markdown("</div>", unsafe_allow_html=True)
 
         #DISPLAY ANALYSIS 
-        download_list = []
+        download_list = [] 
 
-        for details, text in all_inputs:
+        for details, text in all_inputs:  
 
             # File title card
             st.markdown(f"<div class='file-title'>📄 {details['name']}</div>", unsafe_allow_html=True)
