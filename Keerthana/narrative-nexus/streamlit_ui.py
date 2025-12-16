@@ -1,6 +1,7 @@
 import streamlit as st
 from collection import extract_text, get_file_details
 from preprocessing import preprocess_text
+from modeling import lda_topic_model
 from css import load_css
 import pandas as pd
 
@@ -148,3 +149,24 @@ def render_ui():
         )
 
         st.success("✔ Analysis Completed sucessfully!")
+
+        #LDA TOPIC MODELING
+        st.markdown("## 🧠 Topic Modeling (LDA)")
+
+        processed_texts = [
+            item["cleaned_text"]
+            for item in download_list
+            if item.get("cleaned_text")
+        ]
+
+        if len(processed_texts) >= 2:
+
+            lda_topics = lda_topic_model(processed_texts, num_topics=5)
+
+            for topic in lda_topics:
+                st.markdown(f"**{topic['topic']}**: {topic['words']}")
+
+        else:
+            st.warning("⚠ Upload at least 2 documents for topic modeling.")
+
+        st.success("✔ Analysis completed successfully!")
