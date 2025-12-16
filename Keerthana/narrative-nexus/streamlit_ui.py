@@ -1,7 +1,7 @@
 import streamlit as st
 from collection import extract_text, get_file_details
 from preprocessing import preprocess_text
-from modeling import lda_topic_model
+from model import lda_topic_model
 from css import load_css
 import pandas as pd
 
