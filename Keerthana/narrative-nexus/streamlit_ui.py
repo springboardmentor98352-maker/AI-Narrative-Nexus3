@@ -3,6 +3,7 @@ from collection import extract_text, get_file_details
 from preprocessing import preprocess_text
 from model import lda_topic_model
 from css import load_css
+from sentiment import analyze_sentiment
 import pandas as pd
 
 def render_ui():
@@ -131,10 +132,62 @@ def render_ui():
                 st.markdown("<div class='text-box-title'>✔ Cleaned Text</div>", unsafe_allow_html=True)
                 st.markdown(f"<div class='text-box'>{result['processed_text']}</div>", unsafe_allow_html=True)
 
+            #SENTIMENT ANALYSIS
+            sentiment_result = analyze_sentiment(result["processed_text"])
+
+            st.markdown("<h3 class='section-title'>😊 Sentiment Analysis</h3>", unsafe_allow_html=True)
+
+            colS1, colS2, colS3, colS4 = st.columns(4)
+
+            colS1.markdown(f"""
+                <div class='stat-card blue'>
+                    <div class='stat-number'>{sentiment_result['positive']}</div>
+                    <div class='stat-label'>Positive</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            colS2.markdown(f"""
+                <div class='stat-card purple'>
+                    <div class='stat-number'>{sentiment_result['neutral']}</div>
+                    <div class='stat-label'>Neutral</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            colS3.markdown(f"""
+                <div class='stat-card blue'>
+                    <div class='stat-number'>{sentiment_result['negative']}</div>
+                    <div class='stat-label'>Negative</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            colS4.markdown(f"""
+                <div class='stat-card purple'>
+                    <div class='stat-number'>{sentiment_result['compound']}</div>
+                    <div class='stat-label'>Compound Score</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown(
+                f"<div class='reduce-card'>Overall Sentiment: <b>{sentiment_result['sentiment']}</b></div>",
+                unsafe_allow_html=True
+            )
+
+            # Sentiment Validation Check (PER DOCUMENT)
+            if abs(sentiment_result["compound"]) < 0.05:
+                st.info("ℹ Sentiment confidence is low (near neutral).")
+
+            # STORE FOR CSV + LDA
             download_list.append({
                 "name": details['name'],
-                "cleaned_text": result["processed_text"]
+                "cleaned_text": result["processed_text"],
+                "sentiment": sentiment_result["sentiment"],
+                "compound_score": sentiment_result["compound"]
             })
+   
+            # Validation: ensure data exists before summary
+            if not download_list:
+                st.warning("No data available for sentiment summary.")
+                return
 
         #Download CSV
         df = pd.DataFrame(download_list)
@@ -170,3 +223,22 @@ def render_ui():
             st.warning("⚠ Upload at least 2 documents for topic modeling.")
 
         st.success("✔ Analysis completed successfully!")
+        
+         # === TOPIC + SENTIMENT SUMMARY ===
+        st.markdown("## 🔗 Topic + Sentiment Summary")
+
+        avg_sentiment = sum(
+            item["compound_score"] for item in download_list
+        ) / len(download_list)
+
+        overall_sentiment = (
+            "Positive 😊" if avg_sentiment >= 0.05 else
+            "Negative 😠" if avg_sentiment <= -0.05 else
+            "Neutral 😐"
+        )
+
+        st.markdown(
+            f"<div class='reduce-card'>Overall Dataset Sentiment: <b>{overall_sentiment}</b></div>",
+            unsafe_allow_html=True
+        )
+

@@ -10,12 +10,12 @@ def lda_topic_model(texts, num_topics=5, num_words=10):
     doc_count = len(texts)
 
     vectorizer = CountVectorizer(
-        stop_words="english",
-        max_df=0.95,
-        min_df=1 if doc_count < 5 else 2
-    )
+        stop_words="english",   #removes english stopwords
+        max_df=0.95,            #ignores words appering in more than 95% of documents
+        min_df=1 if doc_count < 5 else 2   # id doc<5 allows words appearing once else=ignore very rare words
+    )     
 
-    doc_term_matrix = vectorizer.fit_transform(texts)
+    doc_term_matrix = vectorizer.fit_transform(texts)  
 
     lda = LatentDirichletAllocation(
         n_components=min(num_topics, doc_count),

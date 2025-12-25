@@ -1,4 +1,4 @@
-import nltk
+import nltk #natural lang toolkit(used fr text processing n tokenization)
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from cleaning import clean_text
