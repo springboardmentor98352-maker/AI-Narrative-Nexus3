@@ -4,9 +4,12 @@ from preprocessing import preprocess_text
 from model import lda_topic_model
 from css import load_css
 from sentiment import analyze_sentiment
+from summarization import extractive_summary, abstractive_summary
+from insights import generate_insights
 import pandas as pd
 
 def render_ui():
+
     # PAGE SETUP
     st.set_page_config(page_title="NarrativeNexus", layout="wide")
     st.markdown(load_css(), unsafe_allow_html=True)
@@ -30,6 +33,7 @@ def render_ui():
     st.markdown("<div class='card-section center'>", unsafe_allow_html=True)
 
     if st.button("🚀Analyze Text", use_container_width=True):
+
         all_inputs = []
 
         # Uploaded Files
@@ -58,6 +62,7 @@ def render_ui():
         download_list = []
 
         for details, text in all_inputs:
+
             # File title card
             st.markdown(f"<div class='file-title'>📄 {details['name']}</div>", unsafe_allow_html=True)
 
@@ -184,3 +189,28 @@ def render_ui():
         if topic_sentiments:
             df_topic_sent = pd.DataFrame(topic_sentiments)
             st.bar_chart(df_topic_sent.set_index("topic"))
+
+        #INSIGHTS & SUMMARIZATION
+        st.markdown("## 🧾Automatic Summarization & Insights")
+        combined_text = " ".join(processed_texts)
+
+        #Extractive Summary
+        st.markdown("### ✂ Extractive Summary")
+        extractive = extractive_summary(combined_text)
+        st.markdown(f"<div class='text-box'>{extractive}</div>", unsafe_allow_html=True)
+
+        #Abstractive Summary
+        st.markdown("### 🧠 Abstractive Summary")
+        try:
+            abstractive = abstractive_summary(combined_text[:1000])
+            st.markdown(f"<div class='text-box'>{abstractive}</div>", unsafe_allow_html=True)
+        except Exception:
+            st.warning("⚠ Abstractive summarization failed due to model limitations.")
+
+        #Insights Generation
+        st.markdown("### 💡 Generated Insights")
+        insights = generate_insights(lda_topics, overall_sentiment)
+
+        for insight in insights:
+            st.markdown(f"✔ {insight}")
+
