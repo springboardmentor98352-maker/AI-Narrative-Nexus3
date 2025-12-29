@@ -27,23 +27,20 @@ from reporting import (
     make_pdf_bytes
 )
 
-# ---------- Page Config ----------
 st.set_page_config(page_title="Mind Mesh Analyst", layout="wide")
 
-# ---------- Load CSS ----------
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 st.markdown('<h1 class="app-title">Mind Mesh Analyst</h1>', unsafe_allow_html=True)
 st.markdown('<p class="app-caption">Topics · Sentiment · Summary · Insights</p>', unsafe_allow_html=True)
 
-# ---------- Session State ----------
 if "raw_text" not in st.session_state:
     st.session_state.raw_text = ""
 if "processed_text" not in st.session_state:
     st.session_state.processed_text = ""
 
-# ---------- Input ----------
+#Input 
 st.subheader("📁 Data Import")
 method = st.radio("Input Method", ["File", "Paste Text"], horizontal=True)
 
@@ -56,13 +53,13 @@ else:
     if txt:
         st.session_state.raw_text = txt
 
-# ---------- Raw Preview ----------
+#Raw Preview
 if st.session_state.raw_text:
     st.markdown("### Raw Preview")
     st.code(st.session_state.raw_text[:800])
     st.write("Word Count:", get_word_count(st.session_state.raw_text))
 
-# ---------- Preprocessing ----------
+#Preprocessing
 if st.button("⚡ Start Pre-processing"):
     processed = preprocess_text(st.session_state.raw_text)
     if not processed.strip():
@@ -70,7 +67,7 @@ if st.button("⚡ Start Pre-processing"):
     st.session_state.processed_text = processed
     st.success("Preprocessing completed")
 
-# ---------- Analysis ----------
+# Analysis 
 if st.session_state.processed_text:
     st.subheader("📊 Analysis Dashboard")
 
@@ -88,32 +85,32 @@ if st.session_state.processed_text:
             docs, algorithm=algo, n_topics=n_topics
         )
 
-        # ---------- Topics ----------
+        # Topics 
         topics_df = get_topic_words(model, features)
         st.subheader("🧠 Topics")
         st.dataframe(topics_df)
 
-        # ---------- Sentiment ----------
+        # Sentiment 
         st.subheader("😊 Sentiment Analysis")
         sent_df = analyze_sentiments(docs)
         st.dataframe(sent_df)
 
-        # ---------- Summary ----------
+        # Summary 
         st.subheader("📝 Summary")
         summary = extractive_summary(st.session_state.raw_text)
         st.write(summary)
 
-        # ---------- Keywords ----------
+        # Keywords 
         st.subheader("🔑 Top Keywords")
         kw_df = get_top_keywords(st.session_state.processed_text)
         st.dataframe(kw_df)
 
-        # ---------- Word Cloud ----------
+        # Word Cloud 
         st.subheader("☁ Word Cloud")
         wc = make_wordcloud_image(st.session_state.processed_text.split())
         st.image(wc)
 
-        # ---------- Insights ----------
+        # Insights 
         insights = generate_insights_text(
             get_word_count(st.session_state.raw_text),
             get_word_count(st.session_state.processed_text),
@@ -122,7 +119,7 @@ if st.session_state.processed_text:
             summary
         )
 
-        # ---------- Downloads ----------
+        # Downloads 
         st.subheader("📥 Download Reports")
 
         st.download_button(
@@ -152,4 +149,5 @@ if st.session_state.processed_text:
             data=insights_csv.to_csv(index=False).encode("utf-8"),
             file_name="insights.csv",
             mime="text/csv"
+
         )
