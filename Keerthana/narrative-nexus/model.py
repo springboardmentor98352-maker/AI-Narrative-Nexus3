@@ -1,7 +1,6 @@
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 
-
 def lda_topic_model(texts, num_topics=5, num_words=10):
     """
     LDA Topic Modeling

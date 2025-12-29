@@ -6,9 +6,23 @@ from css import load_css
 from sentiment import analyze_sentiment
 from summarization import extractive_summary, abstractive_summary
 from insights import generate_insights
+from visualization import show_wordcloud, show_sentiment_chart
+from reporting import generate_pdf_report
 import pandas as pd
 
 def render_ui():
+
+    if "overall_sentiment" not in st.session_state:
+        st.session_state.overall_sentiment = None
+
+    if "lda_topics" not in st.session_state:
+        st.session_state.lda_topics = []
+
+    if "extractive" not in st.session_state:
+        st.session_state.extractive = ""
+
+    if "abstractive" not in st.session_state:
+        st.session_state.abstractive = ""
 
     # PAGE SETUP
     st.set_page_config(page_title="NarrativeNexus", layout="wide")
@@ -135,6 +149,8 @@ def render_ui():
         if len(processed_texts) >= 2:
             lda_topics = lda_topic_model(processed_texts, num_topics=5)
 
+            st.session_state.lda_topics = lda_topics
+
             st.markdown("### 📝 Topic Coherence Check")
             for topic in lda_topics:
                 words = topic['words'].split(", ")
@@ -149,12 +165,12 @@ def render_ui():
         # TOPIC + SENTIMENT SUMMARY
         st.markdown("## 🔗 Topic + Sentiment Summary")
         avg_sentiment = sum(item["compound_score"] for item in download_list) / len(download_list)
-        overall_sentiment = (
+        st.session_state.overall_sentiment = (
             "Positive 😊" if avg_sentiment >= 0.05 else
             "Negative 😠" if avg_sentiment <= -0.05 else
             "Neutral 😐"
         )
-        st.markdown(f"<div class='reduce-card'>Overall Dataset Sentiment: <b>{overall_sentiment}</b></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='reduce-card'>Overall Dataset Sentiment: <b>{st.session_state.overall_sentiment}</b></div>", unsafe_allow_html=True)
 
         # SENTIMENT DISTRIBUTION
         pos_count = sum(1 for item in download_list if item["compound_score"] > 0.05)
@@ -197,20 +213,69 @@ def render_ui():
         #Extractive Summary
         st.markdown("### ✂ Extractive Summary")
         extractive = extractive_summary(combined_text)
+        st.session_state.extractive = extractive
         st.markdown(f"<div class='text-box'>{extractive}</div>", unsafe_allow_html=True)
 
         #Abstractive Summary
         st.markdown("### 🧠 Abstractive Summary")
         try:
             abstractive = abstractive_summary(combined_text[:1000])
+            st.session_state.abstractive = abstractive
             st.markdown(f"<div class='text-box'>{abstractive}</div>", unsafe_allow_html=True)
         except Exception:
             st.warning("⚠ Abstractive summarization failed due to model limitations.")
 
         #Insights Generation
         st.markdown("### 💡 Generated Insights")
-        insights = generate_insights(lda_topics, overall_sentiment)
+        insights = generate_insights(lda_topics, st.session_state.overall_sentiment)
 
         for insight in insights:
             st.markdown(f"✔ {insight}")
+
+        
+        #VISUALIZATION DASHBOARD
+
+        st.markdown("## 📊 Visualization Dashboard")
+
+        #WORD CLOUD
+        st.markdown("### ☁ Word Cloud")
+        show_wordcloud(combined_text)
+
+        #SENTIMENT DISTRIBUTION
+        st.markdown("### 📈 Sentiment Distribution Chart")
+        show_sentiment_chart(download_list)
+
+    #REPORT GENERATION
+    import os
+
+    st.markdown("## 📄 Generate Analysis Report")
+
+    report_file = "NarrativeNexus_Report.pdf"
+
+    if st.button("📥 Generate PDF Report"):
+
+        if st.session_state.overall_sentiment is None:
+            st.error("❌ Please analyze text before generating the report.")
+        else:
+            generate_pdf_report(
+                report_file,
+                st.session_state.overall_sentiment,
+                st.session_state.lda_topics,
+                st.session_state.extractive,
+                st.session_state.abstractive
+            )
+            st.success("✔ Report generated successfully!")
+
+    #Show download button ONLY if file exists
+    if os.path.exists(report_file):
+        with open(report_file, "rb") as f:
+            st.download_button(
+                label="⬇ Download Report",
+                data=f,
+                file_name=report_file,
+                mime="application/pdf"
+            )
+
+
+
 
