@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import io
+
 from preprocess import (
     get_word_count,
     preprocess_text,
@@ -8,117 +10,146 @@ from preprocess import (
     get_top_keywords
 )
 
-st.set_page_config(page_title="Mind Mesh Analyst", layout="wide", initial_sidebar_state="expanded")
+from topic_modeling import (
+    split_into_documents,
+    train_topic_model,
+    get_topic_words
+)
 
-try:
-    with open('style.css') as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-except FileNotFoundError:
-    st.warning("style.css not found - default styling will be used.")
+from sentiment_summary import (
+    analyze_sentiments,
+    extractive_summary
+)
 
-st.markdown('<div class="app-title">Mind Mesh Analyst</div>', unsafe_allow_html=True)
-st.markdown('<div class="app-caption">A Smart Engine for Text Understanding</div>', unsafe_allow_html=True)
+from reporting import (
+    make_wordcloud_image,
+    generate_insights_text,
+    make_pdf_bytes
+)
 
-if 'raw_text' not in st.session_state:
-    st.session_state['raw_text'] = ""
-if 'processed_text' not in st.session_state:
-    st.session_state['processed_text'] = ""
-if 'last_uploaded_file_id' not in st.session_state:
-    st.session_state['last_uploaded_file_id'] = None
+# ---------- Page Config ----------
+st.set_page_config(page_title="Mind Mesh Analyst", layout="wide")
 
+# ---------- Load CSS ----------
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+st.markdown('<h1 class="app-title">Mind Mesh Analyst</h1>', unsafe_allow_html=True)
+st.markdown('<p class="app-caption">Topics · Sentiment · Summary · Insights</p>', unsafe_allow_html=True)
+
+# ---------- Session State ----------
+if "raw_text" not in st.session_state:
+    st.session_state.raw_text = ""
+if "processed_text" not in st.session_state:
+    st.session_state.processed_text = ""
+
+# ---------- Input ----------
 st.subheader("📁 Data Import")
-input_method = st.radio("Select Input Method:", ('File', 'Paste Text'), horizontal=True, label_visibility="collapsed")
+method = st.radio("Input Method", ["File", "Paste Text"], horizontal=True)
 
-uploaded_file = None
-if input_method == 'File':
-    uploaded_file = st.file_uploader(
-        "Upload Document (Supported: .txt, .csv, .pdf, .docx)",
-        type=['txt', 'csv', 'pdf', 'docx'],
-        help="Upload a file. Processing will start when you click '⚡ Start Pre-processing'."
-    )
-
-    if uploaded_file is not None:
-        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-        if file_id != st.session_state['last_uploaded_file_id']:
-            extracted_text = extract_text_from_uploaded_file(uploaded_file)
-            if extracted_text:
-                st.session_state['raw_text'] = extracted_text
-                st.session_state['last_uploaded_file_id'] = file_id
-                st.session_state['processed_text'] = ""
-                st.success(f"File Ready: {uploaded_file.name}")
-            else:
-                st.session_state['raw_text'] = ""
-                st.session_state['processed_text'] = ""
-                st.session_state['last_uploaded_file_id'] = None
-                st.error("Could not extract text from the uploaded file. See notes below.")
+if method == "File":
+    file = st.file_uploader("Upload file", type=["txt", "csv", "pdf", "docx"])
+    if file:
+        st.session_state.raw_text = extract_text_from_uploaded_file(file)
 else:
-    text_input = st.text_area("Paste Text Here", height=250, placeholder="Type or paste your content here... (Processing will start when you click the button)")
-    if text_input:
-        st.session_state['raw_text'] = text_input
-        st.session_state['processed_text'] = ""
+    txt = st.text_area("Paste text here", height=250)
+    if txt:
+        st.session_state.raw_text = txt
 
-st.markdown("<br>", unsafe_allow_html=True)
+# ---------- Raw Preview ----------
+if st.session_state.raw_text:
+    st.markdown("### Raw Preview")
+    st.code(st.session_state.raw_text[:800])
+    st.write("Word Count:", get_word_count(st.session_state.raw_text))
 
-if st.session_state['raw_text']:
-    st.markdown("### Raw Text Preview (first 800 chars)")
-    st.code(st.session_state['raw_text'][:800], language='text')
-    st.markdown(f"**Raw word count:** {get_word_count(st.session_state['raw_text'])}")
-    st.markdown("---")
+# ---------- Preprocessing ----------
+if st.button("⚡ Start Pre-processing"):
+    processed = preprocess_text(st.session_state.raw_text)
+    if not processed.strip():
+        processed = preprocess_text_with_fallback(st.session_state.raw_text)
+    st.session_state.processed_text = processed
+    st.success("Preprocessing completed")
 
-col_btn, _ = st.columns([1, 3])
-with col_btn:
-    if st.button("⚡ Start Pre-processing", use_container_width=True):
-        raw = st.session_state.get('raw_text', '').strip()
-        if not raw:
-            st.error("Please provide input text first (upload a file or paste text).")
-        else:
-            processed = preprocess_text(raw)
-            if not processed.strip():
-                st.warning("Standard preprocessing removed all tokens (this can happen with some PDFs). Using a fallback, less-aggressive preprocessing so you can inspect results.")
-                processed = preprocess_text_with_fallback(raw)
-                st.session_state['processed_text'] = processed
-                st.success("Processing completed with fallback (see results).")
-            else:
-                st.session_state['processed_text'] = processed
-                st.success("Processing completed!")
-st.markdown("---")
-
-if st.session_state['processed_text']:
+# ---------- Analysis ----------
+if st.session_state.processed_text:
     st.subheader("📊 Analysis Dashboard")
 
-    raw_count = get_word_count(st.session_state['raw_text'])
-    proc_count = get_word_count(st.session_state['processed_text'])
+    col1, col2 = st.columns(2)
+    col1.metric("Original Words", get_word_count(st.session_state.raw_text))
+    col2.metric("Processed Words", get_word_count(st.session_state.processed_text))
 
-    m_col1, m_col2 = st.columns(2)
-    with m_col1:
-        st.metric(label="Original Words", value=raw_count)
-    with m_col2:
-        st.metric(label="Processed Words", value=proc_count, delta=proc_count - raw_count)
+    algo = st.selectbox("Topic Algorithm", ["LDA", "NMF"])
+    n_topics = st.slider("Number of Topics", 2, 10, 5)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔍 Run Analysis"):
+        docs = split_into_documents(st.session_state.processed_text)
 
-    res_col1, res_col2 = st.columns([3, 2], gap="medium")
+        model, vectorizer, dtm, features = train_topic_model(
+            docs, algorithm=algo, n_topics=n_topics
+        )
 
-    with res_col1:
-        st.markdown("#### 📝 Processed Text View")
-        st.text_area(label="Output Data", value=st.session_state['processed_text'], height=420, key="processed_output_display")
-        st.markdown("<br>", unsafe_allow_html=True)
+        # ---------- Topics ----------
+        topics_df = get_topic_words(model, features)
+        st.subheader("🧠 Topics")
+        st.dataframe(topics_df)
 
-        st.download_button("📥 Download Processed Data (.txt)", data=st.session_state['processed_text'], file_name="processed_data.txt", mime="text/plain", use_container_width=True)
+        # ---------- Sentiment ----------
+        st.subheader("😊 Sentiment Analysis")
+        sent_df = analyze_sentiments(docs)
+        st.dataframe(sent_df)
 
-        proc_df = pd.DataFrame({'processed_text': [st.session_state['processed_text']]})
-        csv_bytes = proc_df.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Download Processed Data (.csv)", data=csv_bytes, file_name="processed_data.csv", mime="text/csv", use_container_width=True)
+        # ---------- Summary ----------
+        st.subheader("📝 Summary")
+        summary = extractive_summary(st.session_state.raw_text)
+        st.write(summary)
 
-    with res_col2:
-        st.markdown("#### 🔑 Top Keywords")
-        df_keywords = get_top_keywords(st.session_state['processed_text'], n=20)
-        if df_keywords.empty:
-            st.info("No keywords found in the processed text.")
-        else:
-            st.dataframe(df_keywords.head(10), use_container_width=True, hide_index=True)
+        # ---------- Keywords ----------
+        st.subheader("🔑 Top Keywords")
+        kw_df = get_top_keywords(st.session_state.processed_text)
+        st.dataframe(kw_df)
 
-elif st.session_state['raw_text']:
-    st.info("Ready to process. Click '⚡ Start Pre-processing' above to begin.")
-else:
-    st.info("Upload a file or paste text to get started.")
+        # ---------- Word Cloud ----------
+        st.subheader("☁ Word Cloud")
+        wc = make_wordcloud_image(st.session_state.processed_text.split())
+        st.image(wc)
+
+        # ---------- Insights ----------
+        insights = generate_insights_text(
+            get_word_count(st.session_state.raw_text),
+            get_word_count(st.session_state.processed_text),
+            topics_df,
+            sent_df["compound"].mean(),
+            summary
+        )
+
+        # ---------- Downloads ----------
+        st.subheader("📥 Download Reports")
+
+        st.download_button(
+            label="📄 Download Insights (TXT)",
+            data=insights.encode("utf-8"),
+            file_name="insights.txt",
+            mime="text/plain"
+        )
+
+        insights_csv = pd.DataFrame({
+            "Metric": [
+                "Original Word Count",
+                "Processed Word Count",
+                "Average Sentiment",
+                "Summary"
+            ],
+            "Value": [
+                get_word_count(st.session_state.raw_text),
+                get_word_count(st.session_state.processed_text),
+                sent_df["compound"].mean(),
+                summary
+            ]
+        })
+
+        st.download_button(
+            label="📊 Download Insights (CSV)",
+            data=insights_csv.to_csv(index=False).encode("utf-8"),
+            file_name="insights.csv",
+            mime="text/csv"
+        )
