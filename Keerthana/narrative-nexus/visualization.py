@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
-
 #WORD CLOUD 
 def show_wordcloud(text):
     if not text.strip():
